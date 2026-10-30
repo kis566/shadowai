@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shadow AI - Login</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        body { background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .login-card { background: #111; padding: 30px; border-radius: 15px; border: 1px solid #333; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h1 { color: #00f2fe; margin-bottom: 10px; }
+        p { color: #888; margin-bottom: 25px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #000; color: #fff; box-sizing: border-box; }
+        .btn { background: linear-gradient(45deg, #00f2fe, #4facfe); border: none; padding: 12px; width: 100%; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .divider { margin: 20px 0; color: #444; position: relative; }
+        .divider::before, .divider::after { content: ""; position: absolute; top: 50%; width: 40%; height: 1px; background: #333; }
+        .divider::before { left: 0; } .divider::after { right: 0; }
+        #googleBtn { display: flex; justify-content: center; }
+        .error { color: #ff4d4d; margin-bottom: 15px; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h1>Shadow AI</h1>
+        <p>Login to start chatting with your Boss</p>
+
+        {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+        <form method="POST">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit" class="btn">Login / Sign Up</button>
+        </form>
+
+        <div class="divider">OR</div>
+
+        <div id="googleBtn">
+            <div id="g_id_onload"
+                 data-client_id="{{ client_id }}"
+                 data-context="signin"
+                 data-ux_mode="popup"
+                 data-callback="handleCredentialResponse"
+                 data-auto_prompt="false">
+            </div>
+            <div class="g_id_signin" data-type="standard"></div>
+        </div>
+    </div>
+
+    <script>
+        function handleCredentialResponse(response) {
+            fetch('/google-login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: response.credential })
+            }).then(res => res.json()).then(data => {
+                if (data.success) window.location.href = "/";
+                else alert("Google Login Failed!");
+            });
+        }
+    </script>
+</body>
+</html>
