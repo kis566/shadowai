@@ -392,14 +392,16 @@ with app.app_context():
 # ==========================================
 # CONFIGURATION
 # ==========================================
-# Jab aap Render pe deploy kar lenge, to "http://127.0.0.1:5000" ki jagah
-# apni Render URL yahan paste karein (e.g., "https://shadow-ai.onrender.com")
-REMOTE_URL = "http://127.0.0.1:5000"
+# Render URL updated
+REMOTE_URL = "https://shadowai-w5r4.onrender.com"
 
 # Android Kivy Wrapper
 class ShadowAIApp(App):
     def build(self):
         self.webview = None
+        # Mobile screen ko full black background dena
+        from kivy.core.window import Window
+        Window.clearcolor = (0, 0, 0, 1)
         Clock.schedule_once(self.create_webview, 0)
         return ModalView()
 
@@ -410,12 +412,12 @@ class ShadowAIApp(App):
         webview.getSettings().setDomStorageEnabled(True)
         webview.getSettings().setAllowFileAccess(True)
         webview.getSettings().setAllowContentAccess(True)
+        webview.getSettings().setUserAgentString("Mozilla/5.0 (Linux; Android 10; Mobile) ShadowAI/1.0")
         webview.setWebViewClient(WebViewClient())
         Activity.setContentView(webview)
 
-        # Agar remote URL set hai to wo load kare, nahi to local
-        url_to_load = REMOTE_URL if REMOTE_URL != "http://127.0.0.1:5000" else "http://127.0.0.1:5000"
-        webview.loadUrl(url_to_load)
+        # Load the Remote Render URL
+        webview.loadUrl(REMOTE_URL)
         self.webview = webview
 
 def run_flask():
