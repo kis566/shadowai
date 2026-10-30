@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shadow AI - Chat</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        .header { padding: 15px; background: #111; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+        .header h2 { margin: 0; color: #00f2fe; font-size: 1.2rem; }
+        .logout-btn { color: #888; text-decoration: none; font-size: 0.9rem; }
+
+        #chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .message { max-width: 80%; padding: 12px 16px; border-radius: 15px; line-height: 1.5; font-size: 1rem; position: relative; }
+        .user-message { align-self: flex-end; background: linear-gradient(45deg, #00f2fe, #4facfe); color: #000; border-bottom-right-radius: 2px; }
+        .ai-message { align-self: flex-start; background: #1a1a1a; border: 1px solid #333; border-bottom-left-radius: 2px; }
+
+        .input-area { padding: 15px; background: #111; border-top: 1px solid #222; display: flex; gap: 10px; align-items: center; }
+        input[type="text"] { flex: 1; background: #000; border: 1px solid #333; color: #fff; padding: 12px; border-radius: 25px; outline: none; }
+        .action-btn { background: none; border: none; color: #00f2fe; font-size: 1.2rem; cursor: pointer; padding: 5px; }
+
+        #image-preview { display: none; padding: 10px; background: #111; border-top: 1px solid #222; }
+        #image-preview img { height: 60px; border-radius: 5px; border: 1px solid #00f2fe; }
+
+        /* Thinking animation */
+        .typing { display: none; align-self: flex-start; background: #1a1a1a; padding: 10px 15px; border-radius: 15px; font-style: italic; color: #888; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2><i class="fas fa-robot"></i> Shadow AI</h2>
+        <a href="/logout" class="logout-btn">Logout</a>
+    </div>
+
+    <div id="chat-container">
+        <div class="message ai-message">Welcome back, Boss! How can I help you today? 😎</div>
+    </div>
+
+    <div id="image-preview">
+        <img id="preview-img" src="" alt="preview">
+        <button onclick="clearImage()" class="action-btn" style="color:#ff4d4d"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div class="typing" id="thinking">Shadow is thinking... 💡</div>
+
+    <div class="input-area">
+        <input type="file" id="file-input" hidden accept="image/*" onchange="previewImage(this)">
+        <button class="action-btn" onclick="document.getElementById('file-input').click()"><i class="fas fa-image"></i></button>
+        <input type="text" id="user-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMessage()">
+        <button class="action-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+    </div>
+
+    <script>
+        let selectedImage = null;
+
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    selectedImage = e.target.result;
+                    document.getElementById('preview-img').src = selectedImage;
+                    document.getElementById('image-preview').style.display = 'block';
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function clearImage() {
+            selectedImage = null;
+            document.getElementById('image-preview').style.display = 'none';
+            document.getElementById('file-input').value = '';
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('user-input');
+            const query = input.value.trim();
+            if (!query && !selectedImage) return;
+
+            // Add user message to UI
+            addMessage(query || "[Image]", 'user-message');
+            input.value = '';
+
+            const thinking = document.getElementById('thinking');
+            thinking.style.display = 'block';
+
+            const currentImage = selectedImage;
+            clearImage();
+
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query, image: currentImage })
+                });
+                const data = await response.json();
+                thinking.style.display = 'none';
+                addMessage(data.answer, 'ai-message');
+
+                // TTS Playback (Auto)
+                playTTS(data.answer);
+            } catch (e) {
+                thinking.style.display = 'none';
+                addMessage("Sorry Boss, I hit a snag. Check logs.", 'ai-message');
+            }
+        }
+
+        function addMessage(text, className) {
+            const container = document.getElementById('chat-container');
+            const div = document.createElement('div');
+            div.className = 'message ' + className;
+            div.innerText = text;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function playTTS(text) {
+            const response = await fetch('/tts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: text })
+            });
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const audio = new Audio(url);
+            audio.play();
+        }
+    </script>
+</body>
+</html>
