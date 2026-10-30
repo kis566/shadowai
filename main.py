@@ -32,9 +32,19 @@ try:
     WebView = autoclass('android.webkit.WebView')
     WebViewClient = autoclass('android.webkit.WebViewClient')
     Activity = autoclass('org.kivy.android.PythonActivity').mActivity
+    IS_ANDROID = True
 except ImportError:
-    # Desktop par run karne ke liye fallback
-    App = None
+    # Desktop ya Server (Render) par run karne ke liye fallback
+    class App: pass
+    class ModalView: pass
+    class Clock:
+        @staticmethod
+        def schedule_once(f, t): pass
+    def run_on_ui_thread(f): return f
+    WebView = None
+    WebViewClient = None
+    Activity = None
+    IS_ANDROID = False
 
 app = Flask(__name__)
 CORS(app)
@@ -414,12 +424,12 @@ def run_flask():
         app.run(host='127.0.0.1', port=5000, debug=False)
 
 if __name__ == '__main__':
-    if App:
-        # Android App logic
+    if IS_ANDROID:
+        # Android App logic: Flask ko background mein aur Kivy ko foreground mein chalayein
         if REMOTE_URL == "http://127.0.0.1:5000":
             threading.Thread(target=run_flask, daemon=True).start()
         ShadowAIApp().run()
     else:
-        # Render/Server logic
+        # Render/Server ya Desktop mode
         port = int(os.environ.get("PORT", 5000))
         app.run(host='0.0.0.0', port=port)
