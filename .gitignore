@@ -1,0 +1,13 @@
+.idea/
+__pycache__/
+*.pyc
+instance/
+.buildozer/
+bin/
+venv/
+.env
+memory.json
+serviceAccountKey.json
+api_keys.json
+shadow_ai.db
+*.mp3

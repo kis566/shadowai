@@ -1,0 +1,12 @@
+Pillow
+Flask
+Flask-Cors
+google-genai
+edge-tts
+Flask-Login
+Flask-SQLAlchemy
+google-auth
+firebase-admin
+werkzeug
+gunicorn
+certifi
